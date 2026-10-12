@@ -25,7 +25,9 @@ interface SheetProps {
 
 /**
  * Painel deslizante inferior — equivalente mobile do <Sheet> usado na web.
- * O conteúdo rola e o rodapé fica fixo acima do teclado.
+ * Tem altura fixa (90% da tela) para que o cabeçalho fique sempre no mesmo
+ * lugar, independente do tamanho do conteúdo. O conteúdo rola e o rodapé
+ * fica fixo acima do teclado.
  */
 export function Sheet({
 	open,
@@ -53,11 +55,12 @@ export function Sheet({
 					onPress={() => onOpenChange(false)}
 				/>
 				<KeyboardAvoidingView
+					className="h-[90%]"
 					behavior={Platform.OS === "ios" ? "padding" : undefined}
 				>
 					<View
 						className={cn(
-							"max-h-[90%] rounded-t-2xl border-t border-border bg-background",
+							"flex-1 rounded-t-2xl border-t border-border bg-background",
 							className,
 						)}
 					>
@@ -82,7 +85,7 @@ export function Sheet({
 						</View>
 
 						<ScrollView
-							className="px-4"
+							className="flex-1 px-4"
 							contentContainerClassName="gap-4 py-4"
 							keyboardShouldPersistTaps="handled"
 						>
