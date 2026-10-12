@@ -8,11 +8,9 @@ import {
 	Users,
 } from "lucide-react-native";
 import type { ReactNode } from "react";
-import { useState } from "react";
 import { Pressable, ScrollView, View } from "react-native";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
-import { Select } from "@/components/ui/Select";
 import { Text } from "@/components/ui/Text";
 import { cn, formatCurrency } from "@/lib/utils";
 import { useAuthState } from "@/modules/auth/presentation/hooks/useAuthState";
@@ -22,11 +20,10 @@ import {
 } from "@/modules/dashboard/presentation/hooks/useTeamsSummaries";
 import { useProducts } from "@/modules/products/presentation/hooks/useProducts";
 import { useStockMoviments } from "@/modules/stockMoviment/presentation/hooks/useStockMoviments";
-import { useDefaultTeam } from "@/modules/teams/presentation/hooks/useDefaultTeam";
+import { TeamSelector } from "@/modules/teams/presentation/components/TeamSelector";
+import { useTeamSelection } from "@/modules/teams/presentation/hooks/useTeamSelection";
 import { useTeams } from "@/modules/teams/presentation/hooks/useTeams";
 import { useAppNavigation } from "@/navigation/types";
-
-const ALL_TEAMS = "all";
 
 const dateFormat = new Intl.DateTimeFormat("pt-BR", {
 	day: "2-digit",
@@ -203,21 +200,9 @@ function TeamSummaryCard({
 export function DashboardPage() {
 	const navigation = useAppNavigation();
 	const { user } = useAuthState();
-	const { defaultTeamId, setDefault } = useDefaultTeam();
 	const { data: teams = [] } = useTeams();
-
-	const [selection, setSelection] = useState<string>(ALL_TEAMS);
-	const isAllView = selection === ALL_TEAMS;
-	const selectedTeamId = isAllView ? null : selection;
+	const { selection, isAllView, selectedTeamId, select } = useTeamSelection();
 	const activeTeamName = teams.find((team) => team.id === selectedTeamId)?.name;
-
-	function handleSelectionChange(value: string) {
-		if (!value) return;
-		setSelection(value);
-		if (value !== ALL_TEAMS && value !== defaultTeamId) {
-			setDefault(value);
-		}
-	}
 
 	const { data: productsResult } = useProducts(selectedTeamId, { limit: 1000 });
 	const { data: movimentsResult } = useStockMoviments(selectedTeamId, {
@@ -275,15 +260,7 @@ export function DashboardPage() {
 						</Text>
 					</View>
 
-					<Select
-						label="Equipe"
-						value={selection}
-						onValueChange={handleSelectionChange}
-						options={[
-							{ value: ALL_TEAMS, label: "Todas as equipes" },
-							...teams.map((team) => ({ value: team.id, label: team.name })),
-						]}
-					/>
+					<TeamSelector teams={teams} value={selection} onChange={select} />
 				</View>
 
 				<View className="gap-2">
@@ -361,7 +338,7 @@ export function DashboardPage() {
 									<TeamSummaryCard
 										key={summary.team.id}
 										summary={summary}
-										onSelect={() => handleSelectionChange(summary.team.id)}
+										onSelect={() => select(summary.team.id)}
 									/>
 								))}
 							</View>

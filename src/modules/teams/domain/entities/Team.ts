@@ -22,3 +22,8 @@ export interface TeamMembership {
 		email: string;
 	};
 }
+
+export const ALL_TEAMS = "all";
+
+/** Id de uma equipe ou ALL_TEAMS para todas as equipes do usuário */
+export type TeamScope = string;

@@ -17,12 +17,14 @@ import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { Input } from "@/components/ui/Input";
-import { Select } from "@/components/ui/Select";
 import { Sheet } from "@/components/ui/Sheet";
 import { Switch } from "@/components/ui/Switch";
 import { Text } from "@/components/ui/Text";
 import { formatCurrency } from "@/lib/utils";
-import type { CreateProductDto } from "@/modules/products/application/dtos/ProductDto";
+import type {
+	CreateProductDto,
+	ProductQueryParams,
+} from "@/modules/products/application/dtos/ProductDto";
 import type { Product } from "@/modules/products/domain/entities/Product";
 import { ProductDetailsSheet } from "@/modules/products/presentation/components/ProductDetailsSheet";
 import { ProductFormSheet } from "@/modules/products/presentation/components/ProductFormSheet";
@@ -31,18 +33,16 @@ import { useCreateProduct } from "@/modules/products/presentation/hooks/useCreat
 import { useDeleteProduct } from "@/modules/products/presentation/hooks/useDeleteProduct";
 import { useProducts } from "@/modules/products/presentation/hooks/useProducts";
 import { useUpdateProduct } from "@/modules/products/presentation/hooks/useUpdateProduct";
-import { useDefaultTeam } from "@/modules/teams/presentation/hooks/useDefaultTeam";
+import { TeamSelector } from "@/modules/teams/presentation/components/TeamSelector";
+import { useTeamSelection } from "@/modules/teams/presentation/hooks/useTeamSelection";
 import { useTeams } from "@/modules/teams/presentation/hooks/useTeams";
 import { useAppNavigation } from "@/navigation/types";
 
 export function ProductsPage() {
 	const navigation = useAppNavigation();
-	const { defaultTeamId } = useDefaultTeam();
-	const hasDefault = defaultTeamId !== null;
-
-	const { data: teams = [] } = useTeams();
-	const [manualTeamId, setManualTeamId] = useState<string | null>(null);
-	const selectedTeamId = hasDefault ? defaultTeamId : manualTeamId;
+	const { data: teams = [], isLoading: teamsLoading } = useTeams();
+	const { selection, isAllView, selectedTeamId, select } = useTeamSelection();
+	const hasTeams = teams.length > 0;
 
 	const [page, setPage] = useState(1);
 	const [limit, setLimit] = useState(10);
@@ -60,13 +60,7 @@ export function ProductsPage() {
 
 	useEffect(() => {
 		setPage(1);
-	}, [
-		selectedTeamId,
-		category,
-		onlyPortioned,
-		onlyBelowMinimum,
-		onlyOutOfStock,
-	]);
+	}, [selection, category, onlyPortioned, onlyBelowMinimum, onlyOutOfStock]);
 
 	function handleBelowMinimumChange(checked: boolean) {
 		setOnlyBelowMinimum(checked);
@@ -78,19 +72,19 @@ export function ProductsPage() {
 		if (checked) setOnlyBelowMinimum(false);
 	}
 
-	const {
-		data: result,
-		isLoading,
-		isError,
-		refetch,
-	} = useProducts(selectedTeamId, {
-		page,
-		limit,
+	const filters: ProductQueryParams = {
 		category: category || undefined,
 		isPortioned: onlyPortioned ? true : undefined,
 		belowMinimum: onlyBelowMinimum ? true : undefined,
 		outOfStock: onlyOutOfStock ? true : undefined,
-	});
+	};
+	const {
+		data: result,
+		isLoading: productsLoading,
+		isError,
+		refetch,
+	} = useProducts(hasTeams ? selection : null, { ...filters, page, limit });
+	const isLoading = teamsLoading || productsLoading;
 
 	const products = result?.data ?? [];
 	const meta = result?.meta;
@@ -121,16 +115,17 @@ export function ProductsPage() {
 		setFormOpen(true);
 	}
 
-	function handleFormSubmit(dto: CreateProductDto) {
-		if (!selectedTeamId) return;
+	function handleFormSubmit(dto: CreateProductDto, formTeamId?: string) {
 		if (editingProduct) {
 			updateProduct.mutate(
 				{ id: editingProduct.id, dto },
 				{ onSuccess: () => setFormOpen(false) },
 			);
 		} else {
+			const teamId = formTeamId ?? selectedTeamId;
+			if (!teamId) return;
 			createProduct.mutate(
-				{ teamId: selectedTeamId, dto },
+				{ teamId, dto },
 				{ onSuccess: () => setFormOpen(false) },
 			);
 		}
@@ -153,7 +148,7 @@ export function ProductsPage() {
 					<Button
 						className="flex-1"
 						label="Novo produto"
-						disabled={!selectedTeamId}
+						disabled={!hasTeams}
 						onPress={handleNewProduct}
 						icon={<Plus size={18} color="rgb(250 250 250)" />}
 					/>
@@ -168,23 +163,14 @@ export function ProductsPage() {
 						variant="outline"
 						size="icon"
 						accessibilityLabel="Filtros"
-						disabled={!selectedTeamId}
+						disabled={!hasTeams}
 						onPress={() => setFiltersOpen(true)}
 						icon={<SlidersHorizontal size={20} color="rgb(113 113 122)" />}
 					/>
 				</View>
 
-				{!hasDefault ? (
-					<Select
-						label="Equipe"
-						value={manualTeamId}
-						onValueChange={(value) => setManualTeamId(value || null)}
-						placeholder="Selecione uma equipe"
-						options={teams.map((team) => ({
-							value: team.id,
-							label: team.name,
-						}))}
-					/>
+				{hasTeams ? (
+					<TeamSelector teams={teams} value={selection} onChange={select} />
 				) : null}
 
 				{activeFilterCount > 0 ? (
@@ -195,13 +181,14 @@ export function ProductsPage() {
 				) : null}
 			</View>
 
-			{!selectedTeamId ? (
-				<EmptyState
-					title="Nenhuma equipe selecionada"
-					description="Selecione uma equipe para ver os produtos."
-				/>
-			) : isLoading ? (
+			{isLoading ? (
 				<LoadingState label="Carregando produtos…" />
+			) : !hasTeams ? (
+				<EmptyState
+					title="Você ainda não participa de nenhuma equipe."
+					actionLabel="Gerenciar equipes"
+					onAction={() => navigation.navigate("Equipes")}
+				/>
 			) : isError ? (
 				<ErrorState
 					message="Erro ao carregar produtos."
@@ -257,6 +244,11 @@ export function ProductsPage() {
 									className="text-xs text-muted-foreground"
 									numberOfLines={1}
 								>
+									{isAllView && item.team?.name ? (
+										<Text className="text-xs font-medium">
+											{item.team.name} ·{" "}
+										</Text>
+									) : null}
 									{[item.category, item.subcategory, item.local]
 										.filter(Boolean)
 										.join(" · ")}
@@ -352,6 +344,7 @@ export function ProductsPage() {
 				product={editingProduct}
 				onSubmit={handleFormSubmit}
 				isPending={createProduct.isPending || updateProduct.isPending}
+				teamOptions={isAllView ? teams : undefined}
 			/>
 
 			<ConfirmDialog
@@ -369,7 +362,7 @@ export function ProductsPage() {
 				open={detailsOpen}
 				onOpenChange={setDetailsOpen}
 				product={currentViewingProduct}
-				teamId={selectedTeamId}
+				teamId={currentViewingProduct?.teamId ?? null}
 			/>
 		</View>
 	);

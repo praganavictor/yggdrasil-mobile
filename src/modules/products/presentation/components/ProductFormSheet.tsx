@@ -3,18 +3,22 @@ import { View } from "react-native";
 import { Button } from "@/components/ui/Button";
 import { Checkbox } from "@/components/ui/Checkbox";
 import { Input, Textarea } from "@/components/ui/Input";
+import { Select } from "@/components/ui/Select";
 import { Sheet } from "@/components/ui/Sheet";
 import { Text } from "@/components/ui/Text";
 import type { CreateProductDto } from "@/modules/products/application/dtos/ProductDto";
 import type { Product } from "@/modules/products/domain/entities/Product";
+import type { Team } from "@/modules/teams/domain/entities/Team";
 
 interface ProductFormSheetProps {
 	open: boolean;
 	onOpenChange: (open: boolean) => void;
 	product?: Product;
-	onSubmit: (dto: CreateProductDto) => void;
+	onSubmit: (dto: CreateProductDto, teamId?: string) => void;
 	isPending: boolean;
 	errorMessage?: string;
+	/** Quando informado, o cadastro pede a equipe do novo produto */
+	teamOptions?: Team[];
 }
 
 /**
@@ -59,11 +63,17 @@ export function ProductFormSheet({
 	onSubmit,
 	isPending,
 	errorMessage,
+	teamOptions,
 }: ProductFormSheetProps) {
 	const [form, setForm] = useState<FormState>(emptyForm);
+	const [teamId, setTeamId] = useState("");
+	const asksTeam = !product && teamOptions !== undefined;
+
+	const onlyTeamId = teamOptions?.length === 1 ? teamOptions[0].id : "";
 
 	useEffect(() => {
 		if (!open) return;
+		setTeamId(onlyTeamId);
 		if (product) {
 			setForm({
 				name: product.name,
@@ -80,25 +90,28 @@ export function ProductFormSheet({
 		} else {
 			setForm(emptyForm);
 		}
-	}, [product, open]);
+	}, [product, open, onlyTeamId]);
 
 	function handleChange(field: keyof FormState, value: string | boolean) {
 		setForm((prev) => ({ ...prev, [field]: value }));
 	}
 
 	function handleSubmit() {
-		onSubmit({
-			name: form.name,
-			description: form.description,
-			local: form.local,
-			category: form.category,
-			subcategory: form.subcategory,
-			unity: form.unity,
-			quantity: toNumber(form.quantity),
-			minumum: toNumber(form.minumum),
-			price: toNumber(form.price),
-			isPortioned: form.isPortioned,
-		});
+		onSubmit(
+			{
+				name: form.name,
+				description: form.description,
+				local: form.local,
+				category: form.category,
+				subcategory: form.subcategory,
+				unity: form.unity,
+				quantity: toNumber(form.quantity),
+				minumum: toNumber(form.minumum),
+				price: toNumber(form.price),
+				isPortioned: form.isPortioned,
+			},
+			asksTeam ? teamId : undefined,
+		);
 	}
 
 	return (
@@ -111,7 +124,7 @@ export function ProductFormSheet({
 					<Button
 						label={isPending ? "Salvando…" : "Salvar"}
 						loading={isPending}
-						disabled={!form.name.trim()}
+						disabled={!form.name.trim() || (asksTeam && !teamId)}
 						onPress={handleSubmit}
 					/>
 					<Button
@@ -123,6 +136,19 @@ export function ProductFormSheet({
 				</>
 			}
 		>
+			{asksTeam ? (
+				<Select
+					label="Equipe"
+					value={teamId || null}
+					onValueChange={setTeamId}
+					placeholder="Selecione uma equipe"
+					options={teamOptions.map((team) => ({
+						value: team.id,
+						label: team.name,
+					}))}
+				/>
+			) : null}
+
 			<Input
 				label="Nome"
 				value={form.name}

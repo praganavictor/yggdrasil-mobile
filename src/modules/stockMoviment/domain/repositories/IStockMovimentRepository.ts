@@ -4,11 +4,12 @@ import type {
 	UpdateStockMovimentDto,
 } from "@/modules/stockMoviment/application/dtos/StockMovimentDto";
 import type { StockMoviment } from "@/modules/stockMoviment/domain/entities/StockMoviment";
+import type { TeamScope } from "@/modules/teams/domain/entities/Team";
 import type { PaginatedResult } from "@/shared/types/pagination";
 
 export interface IStockMovimentRepository {
 	findAll(
-		teamId: string,
+		scope: TeamScope,
 		params?: StockMovimentQueryParams,
 	): Promise<PaginatedResult<StockMoviment>>;
 	findById(id: string): Promise<StockMoviment>;

@@ -6,14 +6,15 @@ import type {
 import type { Product } from "@/modules/products/domain/entities/Product";
 import type { IProductRepository } from "@/modules/products/domain/repositories/IProductRepository";
 import { productApiClient } from "@/modules/products/infrastructure/api/productApiClient";
+import type { TeamScope } from "@/modules/teams/domain/entities/Team";
 import type { PaginatedResult } from "@/shared/types/pagination";
 
 export class ProductRepository implements IProductRepository {
 	findAll(
-		teamId: string,
+		scope: TeamScope,
 		params?: ProductQueryParams,
 	): Promise<PaginatedResult<Product>> {
-		return productApiClient.findAll(teamId, params);
+		return productApiClient.findAll(scope, params);
 	}
 
 	findById(id: string): Promise<Product> {

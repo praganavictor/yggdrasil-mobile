@@ -7,6 +7,11 @@ export interface StockMoviment {
 	price: number;
 	date: string;
 	productId: string;
+	teamId: string;
+	team?: {
+		id: string;
+		name: string;
+	};
 	product?: {
 		id: string;
 		name: string;

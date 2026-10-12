@@ -11,6 +11,11 @@ export interface Product {
 	minumum: number;
 	price: number;
 	isPortioned: boolean;
+	teamId: string;
+	team?: {
+		id: string;
+		name: string;
+	};
 	createdAt?: string;
 	updatedAt?: string;
 }

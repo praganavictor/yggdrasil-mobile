@@ -12,9 +12,9 @@ export function useCreateProduct() {
 	return useMutation({
 		mutationFn: ({ teamId, dto }: { teamId: string; dto: CreateProductDto }) =>
 			createProductUseCase.execute(teamId, dto),
-		onSuccess: (_data, { teamId }) => {
-			// Prefixo cobre as listagens e as buscas por código de barras da equipe
-			queryClient.invalidateQueries({ queryKey: ["products", teamId] });
+		onSuccess: () => {
+			// Prefixo cobre as listagens (de uma ou de todas as equipes) e as buscas por código de barras
+			queryClient.invalidateQueries({ queryKey: ["products"] });
 		},
 	});
 }

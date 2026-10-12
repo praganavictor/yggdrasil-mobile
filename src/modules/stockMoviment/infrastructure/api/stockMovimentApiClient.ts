@@ -5,6 +5,10 @@ import type {
 	UpdateStockMovimentDto,
 } from "@/modules/stockMoviment/application/dtos/StockMovimentDto";
 import type { StockMoviment } from "@/modules/stockMoviment/domain/entities/StockMoviment";
+import {
+	ALL_TEAMS,
+	type TeamScope,
+} from "@/modules/teams/domain/entities/Team";
 import { httpClient } from "@/shared/http/httpClient";
 import type { PaginatedResult } from "@/shared/types/pagination";
 
@@ -15,10 +19,12 @@ function authHeaders(): Record<string, string> {
 
 export const stockMovimentApiClient = {
 	findAll(
-		teamId: string,
+		scope: TeamScope,
 		params?: StockMovimentQueryParams,
 	): Promise<PaginatedResult<StockMoviment>> {
-		const query = new URLSearchParams({ teamId });
+		const query = new URLSearchParams(
+			scope === ALL_TEAMS ? { allTeams: "true" } : { teamId: scope },
+		);
 		if (params?.page) query.set("page", String(params.page));
 		if (params?.limit) query.set("limit", String(params.limit));
 		if (params?.productId) query.set("productId", params.productId);

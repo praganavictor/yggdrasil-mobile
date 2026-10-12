@@ -6,14 +6,15 @@ import type {
 import type { StockMoviment } from "@/modules/stockMoviment/domain/entities/StockMoviment";
 import type { IStockMovimentRepository } from "@/modules/stockMoviment/domain/repositories/IStockMovimentRepository";
 import { stockMovimentApiClient } from "@/modules/stockMoviment/infrastructure/api/stockMovimentApiClient";
+import type { TeamScope } from "@/modules/teams/domain/entities/Team";
 import type { PaginatedResult } from "@/shared/types/pagination";
 
 export class StockMovimentRepository implements IStockMovimentRepository {
 	findAll(
-		teamId: string,
+		scope: TeamScope,
 		params?: StockMovimentQueryParams,
 	): Promise<PaginatedResult<StockMoviment>> {
-		return stockMovimentApiClient.findAll(teamId, params);
+		return stockMovimentApiClient.findAll(scope, params);
 	}
 
 	findById(id: string): Promise<StockMoviment> {

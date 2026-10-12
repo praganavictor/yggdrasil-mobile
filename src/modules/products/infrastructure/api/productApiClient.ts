@@ -5,6 +5,10 @@ import type {
 	UpdateProductDto,
 } from "@/modules/products/application/dtos/ProductDto";
 import type { Product } from "@/modules/products/domain/entities/Product";
+import {
+	ALL_TEAMS,
+	type TeamScope,
+} from "@/modules/teams/domain/entities/Team";
 import { httpClient } from "@/shared/http/httpClient";
 import type { PaginatedResult } from "@/shared/types/pagination";
 
@@ -15,10 +19,11 @@ function authHeaders(): Record<string, string> {
 
 export const productApiClient = {
 	findAll(
-		teamId: string,
+		scope: TeamScope,
 		params?: ProductQueryParams,
 	): Promise<PaginatedResult<Product>> {
 		const query = new URLSearchParams();
+		if (scope === ALL_TEAMS) query.set("allTeams", "true");
 		if (params?.page) query.set("page", String(params.page));
 		if (params?.limit) query.set("limit", String(params.limit));
 		if (params?.category) query.set("category", params.category);
@@ -28,9 +33,10 @@ export const productApiClient = {
 		if (params?.belowMinimum) query.set("belowMinimum", "true");
 		if (params?.outOfStock) query.set("outOfStock", "true");
 		const queryString = query.toString();
+		const path = scope === ALL_TEAMS ? "/products" : `/teams/${scope}/products`;
 
 		return httpClient.get<PaginatedResult<Product>>(
-			`/teams/${teamId}/products${queryString ? `?${queryString}` : ""}`,
+			`${path}${queryString ? `?${queryString}` : ""}`,
 			{ headers: authHeaders() },
 		);
 	},

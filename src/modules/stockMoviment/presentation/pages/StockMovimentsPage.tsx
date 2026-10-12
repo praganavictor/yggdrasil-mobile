@@ -26,8 +26,10 @@ import { useCreateStockMoviment } from "@/modules/stockMoviment/presentation/hoo
 import { useDeleteStockMoviment } from "@/modules/stockMoviment/presentation/hooks/useDeleteStockMoviment";
 import { useStockMoviments } from "@/modules/stockMoviment/presentation/hooks/useStockMoviments";
 import { useUpdateStockMoviment } from "@/modules/stockMoviment/presentation/hooks/useUpdateStockMoviment";
-import { useDefaultTeam } from "@/modules/teams/presentation/hooks/useDefaultTeam";
+import { TeamSelector } from "@/modules/teams/presentation/components/TeamSelector";
+import { useTeamSelection } from "@/modules/teams/presentation/hooks/useTeamSelection";
 import { useTeams } from "@/modules/teams/presentation/hooks/useTeams";
+import { useAppNavigation } from "@/navigation/types";
 
 const dateFormat = new Intl.DateTimeFormat("pt-BR", {
 	day: "2-digit",
@@ -58,12 +60,10 @@ function TypeBadge({ type }: { type: string }) {
 }
 
 export function StockMovimentsPage() {
-	const { defaultTeamId } = useDefaultTeam();
-	const hasDefault = defaultTeamId !== null;
-
-	const { data: teams = [] } = useTeams();
-	const [manualTeamId, setManualTeamId] = useState<string | null>(null);
-	const selectedTeamId = hasDefault ? defaultTeamId : manualTeamId;
+	const navigation = useAppNavigation();
+	const { data: teams = [], isLoading: teamsLoading } = useTeams();
+	const { selection, isAllView, selectedTeamId, select } = useTeamSelection();
+	const hasTeams = teams.length > 0;
 
 	const [page, setPage] = useState(1);
 	const [limit, setLimit] = useState(10);
@@ -71,21 +71,32 @@ export function StockMovimentsPage() {
 
 	useEffect(() => {
 		setPage(1);
-	}, [selectedTeamId, productFilter]);
+	}, [selection, productFilter]);
 
-	const { data: productsResult } = useProducts(selectedTeamId, { limit: 100 });
-	const productsForFilter = productsResult?.data ?? [];
+	function handleTeamChange(value: string) {
+		select(value);
+		setProductFilter("");
+	}
+
+	const scope = hasTeams ? selection : null;
+
+	const { data: productsResult } = useProducts(scope, { limit: 100 });
+	const productsForFilter = (productsResult?.data ?? []).map((product) => ({
+		id: product.id,
+		label: isAllView ? `${product.name} · ${product.team?.name}` : product.name,
+	}));
 
 	const {
 		data: result,
-		isLoading,
+		isLoading: movimentsLoading,
 		isError,
 		refetch,
-	} = useStockMoviments(selectedTeamId, {
+	} = useStockMoviments(scope, {
 		page,
 		limit,
 		productId: productFilter || undefined,
 	});
+	const isLoading = teamsLoading || movimentsLoading;
 
 	const moviments = result?.data ?? [];
 	const meta = result?.meta;
@@ -134,25 +145,20 @@ export function StockMovimentsPage() {
 			<View className="gap-3 border-b border-border p-4">
 				<Button
 					label="Nova movimentação"
-					disabled={!selectedTeamId}
+					disabled={!hasTeams}
 					onPress={handleNew}
 					icon={<Plus size={18} color="rgb(250 250 250)" />}
 				/>
 
-				{!hasDefault ? (
-					<Select
-						label="Equipe"
-						value={manualTeamId}
-						onValueChange={(value) => setManualTeamId(value || null)}
-						placeholder="Selecione uma equipe"
-						options={teams.map((team) => ({
-							value: team.id,
-							label: team.name,
-						}))}
+				{hasTeams ? (
+					<TeamSelector
+						teams={teams}
+						value={selection}
+						onChange={handleTeamChange}
 					/>
 				) : null}
 
-				{selectedTeamId ? (
+				{hasTeams ? (
 					<Select
 						label="Produto"
 						value={productFilter || ALL_PRODUCTS}
@@ -163,20 +169,21 @@ export function StockMovimentsPage() {
 							{ value: ALL_PRODUCTS, label: "Todos os produtos" },
 							...productsForFilter.map((product) => ({
 								value: product.id,
-								label: product.name,
+								label: product.label,
 							})),
 						]}
 					/>
 				) : null}
 			</View>
 
-			{!selectedTeamId ? (
-				<EmptyState
-					title="Nenhuma equipe selecionada"
-					description="Selecione uma equipe para ver as movimentações."
-				/>
-			) : isLoading ? (
+			{isLoading ? (
 				<LoadingState label="Carregando movimentações…" />
+			) : !hasTeams ? (
+				<EmptyState
+					title="Você ainda não participa de nenhuma equipe."
+					actionLabel="Gerenciar equipes"
+					onAction={() => navigation.navigate("Equipes")}
+				/>
 			) : isError ? (
 				<ErrorState
 					message="Erro ao carregar movimentações."
@@ -217,6 +224,14 @@ export function StockMovimentsPage() {
 									<Text className="text-xs text-muted-foreground">
 										{dateFormat.format(new Date(item.date))}
 									</Text>
+									{isAllView && item.team?.name ? (
+										<Text
+											className="min-w-0 flex-1 text-xs text-muted-foreground"
+											numberOfLines={1}
+										>
+											· {item.team.name}
+										</Text>
+									) : null}
 								</View>
 								<Text className="font-medium" numberOfLines={1}>
 									{item.product?.name ?? item.productId}
@@ -258,16 +273,15 @@ export function StockMovimentsPage() {
 				/>
 			)}
 
-			{selectedTeamId ? (
-				<StockMovimentFormSheet
-					open={formOpen}
-					onOpenChange={setFormOpen}
-					moviment={editingMoviment}
-					onSubmit={handleFormSubmit}
-					isPending={createMoviment.isPending || updateMoviment.isPending}
-					teamId={selectedTeamId}
-				/>
-			) : null}
+			<StockMovimentFormSheet
+				open={formOpen}
+				onOpenChange={setFormOpen}
+				moviment={editingMoviment}
+				onSubmit={handleFormSubmit}
+				isPending={createMoviment.isPending || updateMoviment.isPending}
+				teamId={editingMoviment?.teamId ?? selectedTeamId}
+				teamOptions={teams}
+			/>
 
 			<ConfirmDialog
 				open={deleteDialogOpen}

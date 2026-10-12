@@ -14,6 +14,7 @@ import type {
 	StockMoviment,
 	StockMovimentType,
 } from "@/modules/stockMoviment/domain/entities/StockMoviment";
+import type { Team } from "@/modules/teams/domain/entities/Team";
 
 interface StockMovimentFormSheetProps {
 	open: boolean;
@@ -21,7 +22,9 @@ interface StockMovimentFormSheetProps {
 	moviment?: StockMoviment;
 	onSubmit: (dto: CreateStockMovimentDto) => void;
 	isPending: boolean;
-	teamId: string;
+	/** Sem equipe definida, o formulário pede a equipe entre as opções */
+	teamId: string | null;
+	teamOptions?: Team[];
 }
 
 interface FormState {
@@ -44,10 +47,16 @@ export function StockMovimentFormSheet({
 	onSubmit,
 	isPending,
 	teamId,
+	teamOptions = [],
 }: StockMovimentFormSheetProps) {
-	const { data: productsResult } = useProducts(open ? teamId : null, {
-		limit: 100,
-	});
+	const [pickedTeamId, setPickedTeamId] = useState("");
+	const asksTeam = teamId === null;
+	const formTeamId = teamId ?? pickedTeamId;
+
+	const { data: productsResult } = useProducts(
+		open && formTeamId ? formTeamId : null,
+		{ limit: 100 },
+	);
 	const products = productsResult?.data ?? [];
 
 	const [form, setForm] = useState<FormState>({
@@ -58,8 +67,11 @@ export function StockMovimentFormSheet({
 		productId: "",
 	});
 
+	const onlyTeamId = teamOptions.length === 1 ? teamOptions[0].id : "";
+
 	useEffect(() => {
 		if (!open) return;
+		setPickedTeamId(onlyTeamId);
 		if (moviment) {
 			setForm({
 				type: moviment.type,
@@ -77,7 +89,12 @@ export function StockMovimentFormSheet({
 				productId: "",
 			});
 		}
-	}, [moviment, open]);
+	}, [moviment, open, onlyTeamId]);
+
+	function handlePickTeam(value: string) {
+		setPickedTeamId(value);
+		setForm((prev) => ({ ...prev, productId: "" }));
+	}
 
 	const quantity = toNumber(form.quantity);
 	const price = toNumber(form.price);
@@ -89,7 +106,7 @@ export function StockMovimentFormSheet({
 			price,
 			date: form.date,
 			productId: form.productId,
-			teamId,
+			teamId: formTeamId,
 		});
 	}
 
@@ -115,13 +132,29 @@ export function StockMovimentFormSheet({
 				</>
 			}
 		>
+			{asksTeam ? (
+				<Select
+					label="Equipe"
+					value={pickedTeamId || null}
+					onValueChange={handlePickTeam}
+					placeholder="Selecione uma equipe"
+					options={teamOptions.map((team) => ({
+						value: team.id,
+						label: team.name,
+					}))}
+				/>
+			) : null}
+
 			<Select
 				label="Produto"
 				value={form.productId || null}
 				onValueChange={(value) =>
 					setForm((prev) => ({ ...prev, productId: value }))
 				}
-				placeholder="Selecione um produto"
+				disabled={!formTeamId}
+				placeholder={
+					formTeamId ? "Selecione um produto" : "Selecione uma equipe primeiro"
+				}
 				options={products.map((product) => ({
 					value: product.id,
 					label: product.name,
