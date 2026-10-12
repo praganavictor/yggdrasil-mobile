@@ -71,13 +71,7 @@ export function DrawerContent(props: DrawerContentComponentProps) {
 							>
 								<Icon
 									size={18}
-									color={
-										isActive
-											? theme === "dark"
-												? "rgb(24 24 27)"
-												: "rgb(250 250 250)"
-											: iconColor
-									}
+									color={isActive ? "rgb(250 250 250)" : iconColor}
 								/>
 								<Text
 									className={cn(

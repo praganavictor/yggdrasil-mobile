@@ -13,6 +13,11 @@ import { ProductsPage } from "@/modules/products/presentation/pages/ProductsPage
 import { SettingsPage } from "@/modules/settings/presentation/pages/SettingsPage";
 import { StockMovimentsPage } from "@/modules/stockMoviment/presentation/pages/StockMovimentsPage";
 import { TeamsPage } from "@/modules/teams/presentation/pages/TeamsPage";
+import {
+	AppHeaderBackground,
+	AppHeaderTitle,
+	HEADER_FOREGROUND,
+} from "@/navigation/AppHeader";
 import { DrawerContent } from "@/navigation/DrawerContent";
 import type { DrawerParamList, RootStackParamList } from "@/navigation/types";
 import { useTheme } from "@/shared/hooks/useTheme";
@@ -24,7 +29,15 @@ function MainDrawer() {
 	return (
 		<Drawer.Navigator
 			drawerContent={(props) => <DrawerContent {...props} />}
-			screenOptions={{ headerShown: true, drawerType: "front" }}
+			screenOptions={{
+				headerShown: true,
+				drawerType: "front",
+				headerTintColor: HEADER_FOREGROUND,
+				headerBackground: () => <AppHeaderBackground />,
+				headerTitle: ({ children }) => (
+					<AppHeaderTitle>{children}</AppHeaderTitle>
+				),
+			}}
 		>
 			<Drawer.Screen
 				name="Inicio"

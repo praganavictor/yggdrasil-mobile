@@ -35,6 +35,11 @@ module.exports = {
 					DEFAULT: 'rgb(var(--card) / <alpha-value>)',
 					foreground: 'rgb(var(--card-foreground) / <alpha-value>)',
 				},
+				header: {
+					DEFAULT: 'rgb(var(--header) / <alpha-value>)',
+					foreground: 'rgb(var(--header-foreground) / <alpha-value>)',
+					accent: 'rgb(var(--header-accent) / <alpha-value>)',
+				},
 			},
 		},
 	},

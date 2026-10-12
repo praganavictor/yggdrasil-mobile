@@ -8,7 +8,7 @@
 		--foreground: 9 9 11;
 		--card: 255 255 255;
 		--card-foreground: 9 9 11;
-		--primary: 24 24 27;
+		--primary: 42 23 69; /* #2a1745 */
 		--primary-foreground: 250 250 250;
 		--secondary: 244 244 245;
 		--secondary-foreground: 24 24 27;
@@ -20,7 +20,10 @@
 		--destructive-foreground: 250 250 250;
 		--border: 228 228 231;
 		--input: 228 228 231;
-		--ring: 24 24 27;
+		--ring: 132 87 201; /* #8457c9 */
+		--header: 42 23 69; /* #2a1745 */
+		--header-foreground: 250 250 250;
+		--header-accent: 177 140 230; /* #b18ce6 */
 	}
 
 	.dark:root {
@@ -28,8 +31,8 @@
 		--foreground: 250 250 250;
 		--card: 24 24 27;
 		--card-foreground: 250 250 250;
-		--primary: 250 250 250;
-		--primary-foreground: 24 24 27;
+		--primary: 124 77 196; /* #7c4dc4 */
+		--primary-foreground: 250 250 250;
 		--secondary: 39 39 42;
 		--secondary-foreground: 250 250 250;
 		--muted: 39 39 42;
@@ -40,6 +43,6 @@
 		--destructive-foreground: 250 250 250;
 		--border: 39 39 42;
 		--input: 39 39 42;
-		--ring: 212 212 216;
+		--ring: 132 87 201; /* #8457c9 */
 	}
 }
