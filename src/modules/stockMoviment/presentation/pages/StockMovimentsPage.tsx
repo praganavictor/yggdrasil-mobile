@@ -182,7 +182,9 @@ export function StockMovimentsPage() {
 				<EmptyState
 					title="Você ainda não participa de nenhuma equipe."
 					actionLabel="Gerenciar equipes"
-					onAction={() => navigation.navigate("Equipes")}
+					onAction={() =>
+						navigation.navigate("Configuracoes", { tab: "equipes" })
+					}
 				/>
 			) : isError ? (
 				<ErrorState

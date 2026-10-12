@@ -11,7 +11,6 @@ import {
 	Package,
 	Settings,
 	Sun,
-	Users,
 } from "lucide-react-native";
 import { Pressable, View } from "react-native";
 import { Text } from "@/components/ui/Text";
@@ -29,7 +28,6 @@ const ITEMS: {
 	{ name: "Inicio", label: "Início", icon: Home },
 	{ name: "Produtos", label: "Produtos", icon: Package },
 	{ name: "Movimentacoes", label: "Movimentações", icon: ArrowLeftRight },
-	{ name: "Equipes", label: "Equipes", icon: Users },
 	{ name: "Configuracoes", label: "Configurações", icon: Settings },
 ];
 

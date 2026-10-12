@@ -324,7 +324,9 @@ export function DashboardPage() {
 										label="Gerenciar equipes"
 										variant="outline"
 										size="sm"
-										onPress={() => navigation.navigate("Equipes")}
+										onPress={() =>
+											navigation.navigate("Configuracoes", { tab: "equipes" })
+										}
 									/>
 								</CardContent>
 							</Card>

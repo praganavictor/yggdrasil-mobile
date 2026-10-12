@@ -6,12 +6,13 @@ import type {
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 
+export type SettingsTab = "perfil" | "equipes";
+
 export type DrawerParamList = {
 	Inicio: undefined;
 	Produtos: undefined;
 	Movimentacoes: undefined;
-	Equipes: undefined;
-	Configuracoes: undefined;
+	Configuracoes: { tab?: SettingsTab } | undefined;
 };
 
 export type RootStackParamList = {

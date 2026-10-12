@@ -12,7 +12,6 @@ import { BarcodeScannerPage } from "@/modules/products/presentation/pages/Barcod
 import { ProductsPage } from "@/modules/products/presentation/pages/ProductsPage";
 import { SettingsPage } from "@/modules/settings/presentation/pages/SettingsPage";
 import { StockMovimentsPage } from "@/modules/stockMoviment/presentation/pages/StockMovimentsPage";
-import { TeamsPage } from "@/modules/teams/presentation/pages/TeamsPage";
 import {
 	AppHeaderBackground,
 	AppHeaderTitle,
@@ -53,11 +52,6 @@ function MainDrawer() {
 				name="Movimentacoes"
 				component={StockMovimentsPage}
 				options={{ title: "Movimentações" }}
-			/>
-			<Drawer.Screen
-				name="Equipes"
-				component={TeamsPage}
-				options={{ title: "Equipes" }}
 			/>
 			<Drawer.Screen
 				name="Configuracoes"

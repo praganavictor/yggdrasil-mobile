@@ -1,5 +1,5 @@
-import { Users } from "lucide-react-native";
-import { useState } from "react";
+import { type RouteProp, useRoute } from "@react-navigation/native";
+import { useEffect, useState } from "react";
 import { Pressable, ScrollView, View } from "react-native";
 import { Button } from "@/components/ui/Button";
 import {
@@ -15,11 +15,14 @@ import { Text } from "@/components/ui/Text";
 import { cn } from "@/lib/utils";
 import { useAuthState } from "@/modules/auth/presentation/hooks/useAuthState";
 import { useChangePassword } from "@/modules/auth/presentation/hooks/useChangePassword";
+import { TeamsManager } from "@/modules/teams/presentation/components/TeamsManager";
 import { useDefaultTeam } from "@/modules/teams/presentation/hooks/useDefaultTeam";
 import { useTeams } from "@/modules/teams/presentation/hooks/useTeams";
-import { useAppNavigation } from "@/navigation/types";
-
-type Tab = "perfil" | "equipes";
+import {
+	type DrawerParamList,
+	type SettingsTab,
+	useAppNavigation,
+} from "@/navigation/types";
 
 function ProfileTab() {
 	const { user } = useAuthState();
@@ -154,7 +157,6 @@ function ProfileTab() {
 }
 
 function TeamsTab() {
-	const navigation = useAppNavigation();
 	const { data: teams = [] } = useTeams();
 	const { defaultTeamId, setDefault, isSaving } = useDefaultTeam();
 
@@ -200,20 +202,29 @@ function TeamsTab() {
 				</CardContent>
 			</Card>
 
-			<Button
-				label="Gerenciar equipes"
-				variant="outline"
-				onPress={() => navigation.navigate("Equipes")}
-				icon={<Users size={18} color="rgb(113 113 122)" />}
-			/>
+			<TeamsManager />
 		</View>
 	);
 }
 
 export function SettingsPage() {
-	const [activeTab, setActiveTab] = useState<Tab>("perfil");
+	const route = useRoute<RouteProp<DrawerParamList, "Configuracoes">>();
+	const navigation = useAppNavigation();
+	const requestedTab = route.params?.tab;
+	const [activeTab, setActiveTab] = useState<SettingsTab>(
+		requestedTab ?? "perfil",
+	);
 
-	const tabs: { id: Tab; label: string }[] = [
+	// Outras telas abrem Configurações direto numa aba (ex: "Gerenciar equipes").
+	// O param é limpo após o uso: telas do drawer continuam montadas, e sem
+	// isso um segundo pedido pela mesma aba não dispararia o efeito.
+	useEffect(() => {
+		if (!requestedTab) return;
+		setActiveTab(requestedTab);
+		navigation.setParams({ tab: undefined });
+	}, [requestedTab, navigation]);
+
+	const tabs: { id: SettingsTab; label: string }[] = [
 		{ id: "perfil", label: "Perfil" },
 		{ id: "equipes", label: "Equipes" },
 	];
